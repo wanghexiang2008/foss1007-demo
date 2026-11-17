@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spread & Efficiency — Social Network Analysis</title>
+  <meta name="description" content="An interactive field guide to social network diffusion: explore spread, explore efficiency, or build your own network and watch S(α) and E(β) update in real time.">
+  <meta name="theme-color" content="#f2eee4">
+  <meta property="og:title" content="Spread & Efficiency — Social Network Analysis">
+  <meta property="og:description" content="An interactive field guide to spread, efficiency, and the networks in between.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="shell nav-shell">
+      <nav class="main-nav" aria-label="Primary">
+        <a href="#/spread" data-nav="spread">Spread</a>
+        <a href="#/efficiency" data-nav="efficiency">Efficiency</a>
+        <a href="#/custom" data-nav="custom">Sandbox</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ============================================================
+         SPREAD
+    ============================================================= -->
+    <section class="route route-spread" data-route="spread">
+      <div class="shell lab">
+        <div class="lab-head">
+          <div class="lab-heading">
+            <h1>Spread</h1>
+            <p class="lab-formula"><span class="gk">S(α)</span> = posts with distance ≤ <span class="gk">α</span> from the initial node.</p>
+          </div>
+          <div class="lab-network">
+            <span class="mono-tag">NETWORK</span>
+            <strong>Dense community</strong>
+            <span>22 nodes · 21 activities</span>
+          </div>
+        </div>
+
+        <div class="lab-layout">
+          <section class="stage">
+            <div class="graph-frame stage-frame">
+              <div class="graph-host" id="spread-graph" role="img" aria-label="Social network with highlighted spread radius"></div>
+            </div>
+          </section>
+
+          <aside class="rail">
+            <div class="rail-metrics">
+              <div class="readout readout-spread">
+                <span class="metric-kicker">Spread · <span class="gk">S(α)</span></span>
+                <div class="readout-number"><span id="spread-primary-s">16</span><span class="readout-unit">posts</span></div>
+                <span class="readout-sub" id="spread-primary-s-sub">of 21 · 76%</span>
+              </div>
+              <div class="readout readout-secondary readout-eff">
+                <span class="metric-kicker">Efficiency · <span class="gk">E(β)</span></span>
+                <div class="readout-number"><span id="spread-primary-e">3.00</span><span class="readout-unit">h avg</span></div>
+                <span class="readout-sub" id="spread-primary-e-sub">latest 8 · from seed</span>
+              </div>
+            </div>
+
+            <div class="rail-controls">
+              <div class="control control-slider control-primary">
+                <div class="control-head">
+                  <label for="spread-alpha"><span class="gk">α</span> <span>spread radius</span></label>
+                  <output id="spread-alpha-out" for="spread-alpha">2.5</output>
+                </div>
+                <input class="range range-spread" id="spread-alpha" type="range" min="1" max="8" step="0.5" value="2.5">
+                <div class="control-scale"><span>1.0</span><span>distance ≤ <span class="gk">α</span></span><span>8.0</span></div>
+              </div>
+              <div class="control control-slider">
+                <div class="control-head">
+                  <label for="spread-beta"><span class="gk">β</span> <span>latest activities</span></label>
+                  <output id="spread-beta-out" for="spread-beta">8</output>
+                </div>
+                <input class="range range-eff" id="spread-beta" type="range" min="1" max="21" step="1" value="8">
+                <div class="control-scale"><span>1</span><span>from seed</span><span>21</span></div>
+              </div>
+            </div>
+
+            <div class="rail-legend viz-key">
+              <span><i class="key-star">★</i>initial</span>
+              <span><i class="key-dot key-repost"></i>repost</span>
+              <span><i class="key-diamond"></i>comment</span>
+              <span><i class="key-ring key-ring-spread"></i>inside <span class="gk">α</span></span>
+              <span><i class="key-ring key-ring-gold"></i>latest <span class="gk">β</span></span>
+            </div>
+
+            <div class="rail-foot">
+              <span>weights 1.0 / 1.5</span>
+              <button class="reset-button" id="spread-reset" type="button">Reset ↺</button>
+            </div>
+          </aside>
+        </div>
+
+        <div class="chart-grid">
+          <article class="chart-card compact-chart-card">
+            <header class="panel-head">
+              <div>
+                <span class="mono-tag">HYPERPARAMETER → SPREAD</span>
+                <h2>Spread vs <span class="gk">α</span></h2>
+              </div>
+            </header>
+            <div class="chart-host" id="spread-chart-s"></div>
+          </article>
+
+          <article class="chart-card compact-chart-card">
+            <header class="panel-head">
+              <div>
+                <span class="mono-tag">HYPERPARAMETER → EFFICIENCY</span>
+                <h2>Efficiency vs <span class="gk">β</span></h2>
+              </div>
+            </header>
+            <div class="chart-host" id="spread-chart-e"></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         EFFICIENCY
+    ============================================================= -->
+    <section class="route route-efficiency" data-route="efficiency" hidden>
+      <div class="shell lab">
+        <div class="lab-head">
+          <div class="lab-heading">
+            <h1>Efficiency</h1>
+            <p class="lab-formula"><span class="gk">E(β)</span> = weighted average arrival time of the latest <span class="gk">β</span> activities, counted from the seed.</p>
+          </div>
+          <div class="lab-network">
+            <span class="mono-tag">NETWORK</span>
+            <strong>Delayed mesh</strong>
+            <span>20 nodes · 19 activities</span>
+          </div>
+        </div>
+
+        <div class="lab-layout">
+          <section class="stage">
+            <div class="graph-frame stage-frame">
+              <div class="graph-host" id="eff-graph" role="img" aria-label="Social network with weighted delays"></div>
+            </div>
+            <div class="timeline-panel">
+              <div class="timeline-head"><span class="mono-tag">ACTIVITY TIMELINE</span><span id="eff-window-label">latest 8 · from seed</span></div>
+              <div class="timeline-host" id="eff-timeline"></div>
+            </div>
+          </section>
+
+          <aside class="rail">
+            <div class="rail-metrics">
+              <div class="readout readout-eff">
+                <span class="metric-kicker">Efficiency · <span class="gk">E(β)</span></span>
+                <div class="readout-number"><span id="eff-primary-e">17.21</span><span class="readout-unit">h avg</span></div>
+                <span class="readout-sub" id="eff-primary-e-sub">latest 8 · from seed</span>
+              </div>
+              <div class="readout readout-secondary readout-spread">
+                <span class="metric-kicker">Spread · <span class="gk">S(α)</span></span>
+                <div class="readout-number"><span id="eff-primary-s">5</span><span class="readout-unit">posts</span></div>
+                <span class="readout-sub" id="eff-primary-s-sub">of 19 activities at 26%</span>
+              </div>
+            </div>
+
+            <div class="rail-controls">
+              <div class="control control-slider control-primary">
+                <div class="control-head">
+                  <label for="eff-beta"><span class="gk">β</span> <span>latest activities</span></label>
+                  <output id="eff-beta-out" for="eff-beta">8</output>
+                </div>
+                <input class="range range-eff" id="eff-beta" type="range" min="1" max="19" step="1" value="8">
+                <div class="control-scale"><span>1</span><span>from seed</span><span>19</span></div>
+              </div>
+              <div class="control control-slider">
+                <div class="control-head">
+                  <label for="eff-alpha"><span class="gk">α</span> <span>spread radius</span></label>
+                  <output id="eff-alpha-out" for="eff-alpha">2.5</output>
+                </div>
+                <input class="range range-spread" id="eff-alpha" type="range" min="1" max="8" step="0.5" value="2.5">
+                <div class="control-scale"><span>1.0</span><span>distance ≤ <span class="gk">α</span></span><span>8.0</span></div>
+              </div>
+            </div>
+
+            <div class="rail-legend viz-key">
+              <span><i class="key-star">★</i>initial</span>
+              <span><i class="key-dot key-repost"></i>repost</span>
+              <span><i class="key-diamond"></i>comment</span>
+              <span><i class="key-ring key-ring-gold"></i>latest <span class="gk">β</span></span>
+              <span><i class="key-delay"></i>fast → slow</span>
+            </div>
+
+            <div class="rail-foot">
+              <span>edge = hours · weights 1.0 / 1.5</span>
+              <button class="reset-button" id="eff-reset" type="button">Reset ↺</button>
+            </div>
+          </aside>
+        </div>
+
+        <div class="chart-grid">
+          <article class="chart-card compact-chart-card">
+            <header class="panel-head">
+              <div>
+                <span class="mono-tag">HYPERPARAMETER → SPREAD</span>
+                <h2>Spread vs <span class="gk">α</span></h2>
+              </div>
+            </header>
+            <div class="chart-host" id="eff-chart-s"></div>
+          </article>
+
+          <article class="chart-card compact-chart-card">
+            <header class="panel-head">
+              <div>
+                <span class="mono-tag">HYPERPARAMETER → EFFICIENCY</span>
+                <h2>Efficiency vs <span class="gk">β</span></h2>
+              </div>
+            </header>
+            <div class="chart-host" id="eff-chart-e"></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SANDBOX
+    ============================================================= -->
+    <section class="route route-custom" data-route="custom" hidden>
+      <div class="shell lab">
+        <div class="lab-head">
+          <div class="lab-heading">
+            <h1>Sandbox</h1>
+          </div>
+        </div>
+
+        <div class="lab-layout">
+          <section class="stage">
+            <div class="editor-card">
+              <div class="editor-toolbar">
+                <div class="tool-group" role="group" aria-label="Editing tools">
+                  <button class="tool-button is-active" type="button" data-tool="move" aria-pressed="true">
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v12M2 8h12M8 2 5.5 4.5M8 2l2.5 2.5M14 8l-2.5-2.5M14 8l-2.5 2.5M8 14l-2.5-2.5M8 14l2.5-2.5M2 8l2.5-2.5M2 8l2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>
+                    <span>Move</span>
+                  </button>
+                  <button class="tool-button" type="button" data-tool="add" aria-pressed="false">
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="4.2" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3" stroke="currentColor" stroke-width="1.2"/></svg>
+                    <span>Node</span>
+                  </button>
+                  <button class="tool-button" type="button" data-tool="link" aria-pressed="false">
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="12.5" r="2.2" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="12.5" cy="3.5" r="2.2" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M5.2 10.8 10.8 5.2" stroke="currentColor" stroke-width="1.2"/></svg>
+                    <span>Edge</span>
+                  </button>
+                  <button class="tool-button" type="button" data-tool="erase" aria-pressed="false">
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m3 11 6.2-8 4.8 4.4L8 14H5zM7 14l6-1.2" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="m6 5 5.5 4" stroke="currentColor" stroke-width="1.1"/></svg>
+                    <span>Erase</span>
+                  </button>
+                </div>
+                <div class="editor-actions">
+                  <label class="mini-select-wrap" for="custom-example">
+                    <span>Example</span>
+                    <select id="custom-example">
+                      <option value="sample">Sample mesh</option>
+                      <option value="cluster">Dense community</option>
+                    </select>
+                  </label>
+                  <button class="ghost-button" id="custom-reset" type="button">Reset</button>
+                  <button class="ghost-button" id="custom-clear" type="button">Clear</button>
+                </div>
+              </div>
+
+              <div class="graph-frame editor-frame">
+                <div class="graph-host" id="custom-graph" role="img" aria-label="Editable social network graph"></div>
+                <div class="editor-status">
+                  <span><b id="custom-node-count">13</b> nodes</span>
+                  <span><b id="custom-edge-count">19</b> edges</span>
+                  <span id="custom-unreachable">all reachable</span>
+                </div>
+                <div class="editor-hint" id="custom-hint"><span class="hint-dot"></span>Drag to arrange. Click a node or edge to inspect it.</div>
+              </div>
+
+              <div class="editor-footer">
+                <div class="editor-legend">
+                  <span><i class="key-star">★</i>seed</span>
+                  <span><i class="key-dot key-repost"></i>repost</span>
+                  <span><i class="key-diamond"></i>comment</span>
+                  <span><i class="key-ring key-ring-spread"></i>inside <span class="gk">α</span></span>
+                  <span><i class="key-ring key-ring-gold"></i>latest <span class="gk">β</span></span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside class="rail-stack">
+            <div class="rail">
+              <div class="rail-metrics">
+                <div class="readout readout-spread">
+                  <span class="metric-kicker">Spread · <span class="gk">S(α)</span></span>
+                  <div class="readout-number"><span id="custom-s">6</span><span class="readout-unit">posts</span></div>
+                  <span class="readout-sub" id="custom-s-sub">50% of 12 activities</span>
+                </div>
+                <div class="readout readout-eff">
+                  <span class="metric-kicker">Efficiency · <span class="gk">E(β)</span></span>
+                  <div class="readout-number"><span id="custom-e">5.84</span><span class="readout-unit">h avg</span></div>
+                  <span class="readout-sub" id="custom-e-sub">latest 6 · from seed</span>
+                </div>
+              </div>
+
+              <div class="rail-controls">
+                <div class="control control-slider control-primary">
+                  <div class="control-head">
+                    <label for="custom-alpha"><span class="gk">α</span> <span>spread radius</span></label>
+                    <output id="custom-alpha-out" for="custom-alpha">2.5</output>
+                  </div>
+                  <input class="range range-spread" id="custom-alpha" type="range" min="1" max="8" step="0.5" value="2.5">
+                  <div class="control-scale"><span>1.0</span><span>distance ≤ <span class="gk">α</span></span><span>8.0</span></div>
+                </div>
+                <div class="control control-slider">
+                  <div class="control-head">
+                    <label for="custom-beta"><span class="gk">β</span> <span>latest activities</span></label>
+                    <output id="custom-beta-out" for="custom-beta">6</output>
+                  </div>
+                  <input class="range range-eff" id="custom-beta" type="range" min="1" max="12" step="1" value="6">
+                  <div class="control-scale"><span>1</span><span>reachable activities</span><span id="custom-beta-max">12</span></div>
+                </div>
+              </div>
+
+              <div class="rail-foot">
+                <span>weights 1.0 / 1.5</span>
+                <button class="reset-button" id="custom-reset-params" type="button">Reset dials ↺</button>
+              </div>
+            </div>
+
+            <div class="side-card inspector-card">
+              <div class="side-head">
+                <span class="mono-tag">INSPECTOR</span>
+                <span class="selection-badge" id="custom-selection-badge">nothing selected</span>
+              </div>
+              <div id="custom-inspector">
+                <p class="inspector-empty">Pick a node or edge to edit its role or delay.</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="chart-grid">
+          <article class="chart-card compact-chart-card">
+            <header class="panel-head">
+              <div>
+                <span class="mono-tag">HYPERPARAMETER → SPREAD</span>
+                <h2>Spread vs <span class="gk">α</span></h2>
+              </div>
+            </header>
+            <div class="chart-host" id="custom-chart-s"></div>
+          </article>
+
+          <article class="chart-card compact-chart-card">
+            <header class="panel-head">
+              <div>
+                <span class="mono-tag">HYPERPARAMETER → EFFICIENCY</span>
+                <h2>Efficiency vs <span class="gk">β</span></h2>
+              </div>
+            </header>
+            <div class="chart-host" id="custom-chart-e"></div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/views.js" defer></script>
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>
