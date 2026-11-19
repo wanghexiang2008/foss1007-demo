@@ -14,6 +14,8 @@ A three-page, no-build visualization site:
 
 There is no landing page. The site opens directly on **Spread**; the top navigation switches between the three studies.
 
+All networks are **diffusion trees**: every activity has exactly one source, so cycles are not allowed. Preset graphs keep their shortest-path tree, which preserves the original hop counts and arrival times while removing every cycle.
+
 ---
 
 ### Metrics
@@ -64,7 +66,7 @@ E(β) = ( Σ repost time · w_repost + Σ comment time · w_comment ) / β
 
 #### 2. Efficiency
 
-- Network shown: **Delayed mesh**.
+- Network shown: **Delayed cascade**.
 - Every edge has a delay in hours. Thicker, warmer edges are slower.
 - Controls: β (activity window) and α (spread radius).
 - Live output: E(β) and S(α).
@@ -85,7 +87,7 @@ E(β) = ( Σ repost time · w_repost + Σ comment time · w_comment ) / β
 - Tools:
   - **Move** — drag nodes; click a node or edge to select it.
   - **Node** — click the canvas to add an activity. The first node on an empty canvas becomes the seed.
-  - **Edge** — click one node, then another, to add an edge. New edges default to 1.0 h.
+  - **Edge** — click one node, then another, to add an edge. New edges default to 1.0 h. An edge that would close a cycle is refused, because every activity has a single source.
   - **Erase** — click a node or edge to delete it.
 - Inspector on the right:
   - Node: rename it, switch repost/comment, make it the seed, or delete it.
@@ -163,6 +165,7 @@ README.md               This file
 ### Notes
 
 - Spread uses `distance ≤ α` in the current version.
+- Networks are acyclic diffusion trees; the Sandbox refuses edges that would create a cycle.
 - The efficiency β window expands from the seed on the left, rather than taking the slowest activities at the end of the cascade.
 - Activity weights are fixed at repost 1.0 / comment 1.5; they are not UI controls.
 
@@ -178,6 +181,8 @@ README.md               This file
 3. **Sandbox**：自己画网络、加边、改延迟，实时查看 spread 与 efficiency。
 
 网站没有总览页，打开后会直接进入 **Spread**。顶部导航栏可以在三个页面之间切换。
+
+所有网络都是**扩散树**：每个活动只有一个来源，因此不允许出现环。预设网络保留从 seed 出发的最短路径树，在删除所有环的同时，保持原来的 hop distance 和 arrival time 不变。
 
 ---
 
@@ -229,7 +234,7 @@ E(β) = ( Σ repost time · w_repost + Σ comment time · w_comment ) / β
 
 #### 2. Efficiency
 
-- 展示网络：**Delayed mesh**。
+- 展示网络：**Delayed cascade**。
 - 每个节点之间的边有以小时为单位的 delay；边越粗/越偏暖色表示越慢。
 - 可调参数：β（activity window）、α（传播半径）。
 - 实时输出：E(β)、S(α)。
@@ -250,7 +255,7 @@ E(β) = ( Σ repost time · w_repost + Σ comment time · w_comment ) / β
 - 工具：
   - **Move**：拖动节点位置；点击节点或边选中。
   - **Node**：点击画布放置一个活动节点。空画布上的第一个节点会自动成为 seed。
-  - **Edge**：先点一个节点，再点另一个节点，创建一条边。默认 delay 为 1.0 h。
+  - **Edge**：先点一个节点，再点另一个节点，创建一条边。默认 delay 为 1.0 h。如果这条边会形成环，网站会拒绝创建，因为每个活动只能有一个来源。
   - **Erase**：点击节点或边删除。
 - Inspector（右侧）：
   - 节点：修改名称、切换 repost / comment、设为 seed、删除节点。
@@ -328,5 +333,6 @@ README.md              本文件
 ### 备注
 
 - Spread 使用 `distance ≤ α`（小于等于），这是当前版本的定义。
+- 所有网络都是无环的扩散树；Sandbox 会拒绝会形成环的边。
 - Efficiency 的 β window 从左侧的 seed 开始向右展开，而不是从传播末期倒着选。
 - 权重目前固定为 repost 1.0 / comment 1.5；不是页面控件。

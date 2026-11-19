@@ -135,50 +135,30 @@
       edges.push(edge("seed", id, 1));
     });
 
-    for (let i = 0; i < r1.length; i += 1) {
-      edges.push(edge(r1[i], r1[(i + 1) % r1.length], 1));
-    }
-
     const byId = {};
     nodes.forEach(function (nd) {
       byId[nd.id] = nd;
     });
 
-    /* Each inner node reaches its two closest second-ring nodes. */
-    r1.forEach(function (id) {
-      const origin = byId[id];
-      r2
-        .slice()
-        .sort(function (a, b) {
-          const da = Math.hypot(byId[a].x - origin.x, byId[a].y - origin.y);
-          const db = Math.hypot(byId[b].x - origin.x, byId[b].y - origin.y);
-          return da - db;
-        })
-        .slice(0, 2)
-        .forEach(function (target) {
-          edges.push(edge(id, target, 1));
-        });
-    });
-
-    for (let i = 0; i < r2.length; i += 1) {
-      edges.push(edge(r2[i], r2[(i + 1) % r2.length], 1));
-    }
-
-    r3.forEach(function (id) {
-      const origin = byId[id];
-      const target = r2
+    function nearestParent(childId, candidates) {
+      const origin = byId[childId];
+      return candidates
         .slice()
         .sort(function (a, b) {
           const da = Math.hypot(byId[a].x - origin.x, byId[a].y - origin.y);
           const db = Math.hypot(byId[b].x - origin.x, byId[b].y - origin.y);
           return da - db;
         })[0];
-      edges.push(edge(id, target, 1));
+    }
+
+    /* Each outer node answers the closest activity one ring closer in. */
+    r2.forEach(function (id) {
+      edges.push(edge(nearestParent(id, r1), id, 1));
     });
 
-    for (let i = 0; i < r3.length; i += 1) {
-      edges.push(edge(r3[i], r3[(i + 1) % r3.length], 1));
-    }
+    r3.forEach(function (id) {
+      edges.push(edge(nearestParent(id, r2), id, 1));
+    });
 
     return {
       name: "Dense community",
@@ -258,11 +238,6 @@
       edges.push(edge(leaf.id, chainIds[leaf.chain], 1));
     });
 
-    /* Sibling links keep the drawing from feeling like a bare tree. */
-    if (leafIds[0] && leafIds[2]) edges.push(edge(leafIds[0].id, leafIds[2].id, 1));
-    if (leafIds[8] && leafIds[10]) edges.push(edge(leafIds[8].id, leafIds[10].id, 1));
-    if (leafIds[16] && leafIds[18]) edges.push(edge(leafIds[16].id, leafIds[18].id, 1));
-
     return {
       name: "Long relay",
       seedId: "seed",
@@ -329,13 +304,6 @@
       });
     });
 
-    /* A few cross-links make the burst feel socially real. */
-    edges.push(edge(hubIds[0], hubIds[1], 1.1));
-    edges.push(edge(hubIds[1], hubIds[2], 1.4));
-    edges.push(edge(hubIds[3], hubIds[4], 1.2));
-    edges.push(edge(hubIds[4], hubIds[5], 1.3));
-    edges.push(edge(hubIds[5], hubIds[0], 1.5));
-
     return {
       name: "Quick core",
       seedId: "seed",
@@ -345,7 +313,7 @@
   }
 
   /* ==========================================================================
-     Preset 02B — delayed mesh
+     Preset 02B — delayed cascade
      Two communities, one expensive bridge, and long response times.
      ========================================================================== */
 
@@ -432,7 +400,7 @@
     add("q9", "q1", 2.8);
 
     return {
-      name: "Delayed mesh",
+      name: "Delayed cascade",
       seedId: "seed",
       nodes: nodes,
       edges: edges,
@@ -490,27 +458,46 @@
     add("n10", "n11", 1.9);
 
     return {
-      name: "Sample mesh",
+      name: "Sample network",
       seedId: "seed",
       nodes: nodes,
       edges: edges,
     };
   }
 
-  const denseCommunity = buildDenseCommunity();
-  const longRelay = buildLongRelay();
-  const quickCore = buildQuickCore();
-  const delayedMesh = buildDelayedMesh();
-  const sampleMesh = buildSampleMesh();
+  /*
+   * A diffusion network is a tree: every activity has exactly one source.
+   * Keep the shortest-path tree from the seed so preset hop counts and
+   * arrival times stay the same while every cycle is removed.
+   */
+  function treeify(graph) {
+    const built = buildAdjacency(graph);
+    const weighted = dijkstra(graph, built.adj);
+    const keep = new Set();
+    weighted.prev.forEach(function (parent) {
+      keep.add(parent.edge.id);
+    });
+    return Object.assign({}, graph, {
+      edges: graph.edges.filter(function (e) {
+        return keep.has(e.id);
+      }),
+    });
+  }
+
+  const denseCommunity = treeify(buildDenseCommunity());
+  const longRelay = treeify(buildLongRelay());
+  const quickCore = treeify(buildQuickCore());
+  const delayedCascade = treeify(buildDelayedMesh());
+  const sampleNetwork = treeify(buildSampleMesh());
 
   SNA.presets = {
     spread: { a: denseCommunity, b: longRelay },
-    efficiency: { a: quickCore, b: delayedMesh },
+    efficiency: { a: quickCore, b: delayedCascade },
     community: denseCommunity,
     relay: longRelay,
     quick: quickCore,
-    slow: delayedMesh,
-    sample: sampleMesh,
+    slow: delayedCascade,
+    sample: sampleNetwork,
   };
 
   /* ==========================================================================
@@ -845,6 +832,46 @@
     return graph.edges.find(function (e) {
       return (e.a === a && e.b === b) || (e.a === b && e.b === a);
     });
+  };
+
+  /*
+   * Diffusion networks are trees, so a new edge may only join two separate
+   * components. Any path between the endpoints means the edge would close a
+   * cycle. Self-links are always rejected.
+   */
+  SNA.pathExists = function (graph, fromId, toId) {
+    if (fromId === toId) return true;
+    if (!SNA.findNode(graph, fromId) || !SNA.findNode(graph, toId)) return false;
+
+    const adj = new Map();
+    graph.nodes.forEach(function (n) {
+      adj.set(n.id, []);
+    });
+    graph.edges.forEach(function (e) {
+      if (!adj.has(e.a) || !adj.has(e.b) || e.a === e.b) return;
+      adj.get(e.a).push(e.b);
+      adj.get(e.b).push(e.a);
+    });
+
+    const seen = new Set([fromId]);
+    const queue = [fromId];
+    for (let head = 0; head < queue.length; head += 1) {
+      const current = queue[head];
+      const neighbours = adj.get(current) || [];
+      for (let i = 0; i < neighbours.length; i += 1) {
+        const next = neighbours[i];
+        if (next === toId) return true;
+        if (!seen.has(next)) {
+          seen.add(next);
+          queue.push(next);
+        }
+      }
+    }
+    return false;
+  };
+
+  SNA.wouldCreateCycle = function (graph, a, b) {
+    return a === b || SNA.pathExists(graph, a, b);
   };
 
   SNA.getNeighborIds = function (graph, id) {

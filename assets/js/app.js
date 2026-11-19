@@ -31,7 +31,7 @@
     },
     efficiency: {
       graph: SNA.presets.efficiency.b,
-      name: "Delayed mesh",
+      name: "Delayed cascade",
     },
   };
 
@@ -397,7 +397,7 @@
     if (host) {
       host.setAttribute(
         "aria-label",
-        "Delayed mesh network. Efficiency at beta " +
+        "Delayed cascade network. Efficiency at beta " +
           params.beta +
           " is " +
           formatE(analysis.efficiency) +
@@ -438,7 +438,7 @@
       height: 245,
       ariaLabel:
         "Spread versus alpha for the " +
-        (prefix === "spread" ? "dense community" : "delayed mesh") +
+        (prefix === "spread" ? "dense community" : "delayed cascade") +
         ". At alpha " +
         params.alpha +
         ", " +
@@ -476,7 +476,7 @@
       height: 245,
       ariaLabel:
         "Efficiency versus beta for the " +
-        (prefix === "spread" ? "dense community" : "delayed mesh") +
+        (prefix === "spread" ? "dense community" : "delayed cascade") +
         ". At beta " +
         params.beta +
         ", the weighted average is " +
@@ -829,7 +829,7 @@
     } else if (custom.tool === "add") {
       message = "Click the canvas to place an activity.";
     } else if (custom.tool === "link") {
-      message = "Click one node, then another, to connect them.";
+      message = "Click one node, then another, to connect them. Cycles are not allowed.";
     } else if (custom.tool === "erase") {
       message = "Click a node or edge to remove it.";
     } else {
@@ -983,6 +983,11 @@
       renderCustomInspector(custom.last ? custom.last.analysis : SNA.analyze(custom.graph, readParams("custom")));
       updateSelectionBadge();
       updateCustomHint();
+      return;
+    }
+
+    if (SNA.wouldCreateCycle(custom.graph, source, nodeId)) {
+      setCustomHint("Edge skipped: that would create a cycle. Each activity has a single source.");
       return;
     }
 
@@ -1259,7 +1264,7 @@
       "</b></span>" +
       "<span>affects <b>arrival</b></span>" +
       "</div>" +
-      '<p class="inspect-note">This edge is the time between the two activities. It does not affect spread, only efficiency.</p>' +
+      '<p class="inspect-note">This edge is the time between the two activities. It does not affect spread, only efficiency. Each activity has a single source, so cycles are disabled.</p>' +
       '<div class="inspect-buttons">' +
       '<button type="button" class="danger" data-action="delete-edge">Delete edge</button>' +
       "</div>";
